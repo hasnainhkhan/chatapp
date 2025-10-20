@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Upload or Type Text</title>
+	<link rel="icon" type="image/png" href="/images/logi.png" sizes="32x32">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Upload a Text File or Type Text</h1>
+    <form th:action="@{/text}" method="post" enctype="multipart/form-data" class="mb-4">
+        <div class="mb-3">
+            <label for="textfile" class="form-label">Upload .txt file (Max 2MB):</label>
+            <input class="form-control" type="file" id="textfile" name="textfile" accept=".txt" />
+            <small class="form-text text-muted">Optional. Only plain text files allowed.</small>
+        </div>
+        <div class="mb-3">
+            <label for="manualtext" class="form-label">Or type/paste text here:</label>
+            <textarea class="form-control" id="manualtext" name="manualtext" rows="5"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${resultText}">
+        <h2>Result:</h2>
+        <pre style="background:#f8f9fa;padding:1em;border-radius:4px;" th:text="${resultText}"></pre>
+    </div>
+	<footer>
+	  © 2025 Hasnain Haidar. All rights reserved.
+	</footer>
+</div>
+</body>
+</html>

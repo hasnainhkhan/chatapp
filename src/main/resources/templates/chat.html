@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat Page</title>
+	<style>
+		    body {
+		        font-family: Arial, sans-serif;
+		        background-color: #f5f5f5;
+		        margin: 0;
+		        padding: 0;
+		        display: flex;
+		        justify-content: center;
+		        align-items: center;
+		        height: 100vh;
+		        flex-direction: column;
+		    }
+
+		    h2 {
+		        color: #333;
+		        margin-top: 20px;
+		    }
+
+		    .chat-container {
+		        background: #ffffff;
+		        border-radius: 10px;
+		        width: 80%;
+		        max-width: 600px;
+		        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+		        overflow: hidden;
+		        display: flex;
+		        flex-direction: column;
+		        height: 80vh;
+		        padding: 20px;
+		    }
+
+		    .chat-box {
+		        flex: 1;
+		        overflow-y: auto;
+		        padding: 10px;
+		        display: flex;
+		        flex-direction: column;
+		        gap: 15px;
+		    }
+
+		    .input-container {
+		        display: flex;
+		        gap: 10px;
+		        margin-top: 20px;
+		    }
+
+		    input[type="text"] {
+		        width: 80%;
+		        padding: 12px;
+		        font-size: 16px;
+		        border: 2px solid #ccc;
+		        border-radius: 20px;
+		        outline: none;
+		        transition: border-color 0.3s;
+		    }
+
+		    input[type="text"]:focus {
+		        border-color: #4CAF50;
+		    }
+
+		    input[type="submit"] {
+		        padding: 12px;
+		        font-size: 16px;
+		        border-radius: 20px;
+		        background-color: #4CAF50;
+		        color: white;
+		        border: none;
+		        cursor: pointer;
+		    }
+
+		    input[type="submit"]:hover {
+		        background-color: #45a049;
+		    }
+
+		    .response {
+		        background: #f1f1f1;
+		        padding: 10px;
+		        border-radius: 15px;
+		        max-width: 70%;
+		        align-self: flex-start;
+		        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+		    }
+
+		    .user-message {
+		        background: #0078D4;
+		        color: white;
+		        align-self: flex-end;
+		    }
+
+		    .ai-message {
+		        background: #e0e0e0;
+		        color: #333;
+		        align-self: flex-start;
+		    }
+
+		    .chat-box p {
+		        margin: 0;
+		    }
+
+		    #typing-cursor {
+		        animation: blink 0.7s steps(1) infinite;
+		        font-weight: bold;
+		        margin-left: 2px;
+		    }
+
+		    @keyframes blink {
+		        0% { opacity: 1; }
+		        50% { opacity: 0; }
+		        100% { opacity: 1; }
+		    }
+
+		    #stopButton {
+		        padding: 10px;
+		        margin: 5px;
+		        cursor: pointer;
+		    }
+
+		    /* Loader Spinner */
+		    .loader {
+		        border: 4px solid #f3f3f3;
+		        border-top: 4px solid #4CAF50;
+		        border-radius: 50%;
+		        width: 24px;
+		        height: 24px;
+		        animation: spin 1s linear infinite;
+		        margin: auto;
+		    }
+
+		    @keyframes spin {
+		        0% { transform: rotate(0deg); }
+		        100% { transform: rotate(360deg); }
+		    }
+	</style>
+</head>
+<body>
+
+<!-- Use full syntax for fragment insertion -->
+
+
+
+<h2>Chat with AI</h2>
+<div class="chat-container">
+    <div class="chat-box" id="chatBox">
+        <!-- Chat messages will appear here -->
+    </div>
+    <button id="stopButton">Stop Response</button>
+
+    <div class="input-container">
+        <input type="text" id="promptInput" name="prompt" placeholder="Enter your message..." required />
+        <input type="submit" value="Send" id="sendMessageButton" />
+    </div>
+</div>
+	
+<script>
+    document.getElementById("sendMessageButton").addEventListener("click", function (e) {
+        e.preventDefault(); // Prevent form reload
+
+        const promptInput = document.getElementById("promptInput");
+        const prompt = promptInput.value;
+        if (!prompt.trim()) return;
+
+        const MAX_WORDS = 100;
+        const wordCount = prompt.trim().split(/\s+/).length;
+        if (wordCount > MAX_WORDS) {
+            alert(`Please limit your input to ${MAX_WORDS} words.`);
+            return;
+        }
+
+        const chatBox = document.getElementById("chatBox");
+        let isResponseActive = true;
+
+        function stopResponse() {
+            isResponseActive = false;
+        }
+
+        document.getElementById("stopButton").addEventListener("click", stopResponse);
+
+        // Show user message
+        const userMessageDiv = document.createElement("div");
+        userMessageDiv.classList.add("response", "user-message");
+        userMessageDiv.innerHTML = `<p><strong>You:</strong> ${prompt}</p>`;
+        chatBox.appendChild(userMessageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Show loading spinner
+        const loaderDiv = document.createElement("div");
+        loaderDiv.classList.add("loader");
+        chatBox.appendChild(loaderDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Fetch AI response
+        fetch("/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({ prompt: prompt })
+        })
+        .then(response => response.text())
+        .then(aiResponse => {
+            loaderDiv.remove(); // Remove loader
+
+            const aiMessageDiv = document.createElement("div");
+            aiMessageDiv.innerHTML = `<span id="typing-cursor">|</span>`;
+            aiMessageDiv.classList.add("response", "ai-message");
+            chatBox.appendChild(aiMessageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            aiResponse = aiResponse.replace(/\*\*/g, '');
+            const words = aiResponse.split(" ");
+            let currentText = "";
+            let index = 0;
+
+            const interval = setInterval(() => {
+                if (index < words.length && isResponseActive) {
+                    currentText += words[index] + " ";
+                    aiMessageDiv.textContent = currentText.trim();
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    index++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 150);
+
+            promptInput.value = "";
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Supported Languages</title>
+	<link rel="icon" type="image/png" href="/images/logi.png" sizes="32x32">
+    <style>
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">Supported Languages</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Language Code</th>
+                <th>Language Name</th>
+                <th>Additional Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="langEntry : ${languages}">
+                <td th:text="${langEntry.key}"></td>
+                <td th:text="${langEntry.value['name']}"></td>
+                <td th:text="${langEntry.value['nativeName']}"></td>
+            </tr>
+        </tbody>
+    </table>
+	<footer>
+	  © 2025 Hasnain Haidar. All rights reserved.
+	</footer>
+</body>
+</html>
